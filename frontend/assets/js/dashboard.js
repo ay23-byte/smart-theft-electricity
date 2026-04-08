@@ -157,18 +157,25 @@ function initializeDashboard() {
 }
 
 function initializeLiveUpdates() {
+    const runtime = window.SMARTTHEFT_RUNTIME || {};
+    if (runtime.liveStreamEnabled === false) {
+        setStatusMessage("Live stream disabled in production. Using light polling.", "info");
+        startLivePolling(10000);
+        return;
+    }
+
     if ("EventSource" in window) {
         connectLiveStream();
         return;
     }
 
-    startLivePolling();
+    startLivePolling(10000);
 }
 
-function startLivePolling() {
+function startLivePolling(intervalMs = 3000) {
     if (livePollingTimer) return;
 
-    livePollingTimer = setInterval(updateDashboard, 3000);
+    livePollingTimer = setInterval(updateDashboard, intervalMs);
     setStatusMessage("Live stream unavailable. Using polling fallback.", "error");
 }
 
@@ -188,7 +195,7 @@ function connectLiveStream() {
         liveStreamSource = new EventSource("/api/live/stream");
     } catch (error) {
         console.warn("EventSource unavailable, switching to polling.", error);
-        startLivePolling();
+        startLivePolling(10000);
         return;
     }
 
@@ -223,7 +230,7 @@ function connectLiveStream() {
         }
 
         setStatusMessage("Live stream disconnected. Reconnecting...", "error");
-        startLivePolling();
+        startLivePolling(10000);
 
         if (!liveStreamReconnectTimer) {
             liveStreamReconnectTimer = setTimeout(() => {
