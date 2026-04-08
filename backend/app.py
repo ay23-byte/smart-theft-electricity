@@ -60,20 +60,44 @@ BATCH_RAW_EXCLUDED_COLUMNS = {"CONS_NO", "FLAG", "THEFT_LABEL", "LABEL", "ID"}
 MODEL_PATH = os.path.join(BASE_DIR, 'smart_theft_model.pkl')
 SCALER_PATH = os.path.join(BASE_DIR, 'scaler.pkl')
 
-try:
-    model = joblib.load(MODEL_PATH)
-    scaler = joblib.load(SCALER_PATH)
-    print("AI Model & Scaler loaded successfully.")
-except Exception as e:
-    print(f"AI Model Load Failed: {e}. Check if files are in 'backend' folder.")
-    model = None
-    scaler = None
+model = None
+scaler = None
 
-try:
-    model, scaler = load_trained_artifacts(BASE_DIR)
-    print("Reusable model helpers loaded successfully.")
-except Exception as e:
-    print(f"Reusable model loader unavailable: {e}")
+
+def load_model_artifacts():
+    global model, scaler
+    if model is not None and scaler is not None:
+        return model, scaler
+
+    try:
+        loaded_model, loaded_scaler = load_trained_artifacts(BASE_DIR)
+        model, scaler = loaded_model, loaded_scaler
+        print("Reusable model helpers loaded successfully.")
+    except Exception as helper_error:
+        print(f"Reusable model loader unavailable: {helper_error}")
+        try:
+            loaded_model = joblib.load(MODEL_PATH)
+            loaded_scaler = joblib.load(SCALER_PATH)
+            model, scaler = loaded_model, loaded_scaler
+            print("AI Model & Scaler loaded successfully.")
+        except Exception as e:
+            print(f"AI Model Load Failed: {e}. Check if files are in 'backend' folder.")
+            model = None
+            scaler = None
+
+    return model, scaler
+
+
+def get_model():
+    return load_model_artifacts()[0]
+
+
+def get_scaler():
+    return load_model_artifacts()[1]
+
+
+def model_artifacts_present():
+    return os.path.exists(MODEL_PATH) and os.path.exists(SCALER_PATH)
 
 # -------------------------
 # TWILIO & DATABASE
@@ -1141,12 +1165,14 @@ def build_city_features(power_val, city_name):
 
 
 def run_ai_prediction(power_val, city_name):
-    if model is None or scaler is None:
+    loaded_model = get_model()
+    loaded_scaler = get_scaler()
+    if loaded_model is None or loaded_scaler is None:
         return "THEFT" if power_val > 3500 else "NORMAL", 0.0
 
     features = build_city_features(power_val, city_name)
-    scaled_feat = scaler.transform(features)
-    prob = model.predict_proba(scaled_feat)[0][1]
+    scaled_feat = loaded_scaler.transform(features)
+    prob = loaded_model.predict_proba(scaled_feat)[0][1]
 
     status = "THEFT" if prob > DEFAULT_THRESHOLD else "NORMAL"
     return status, round(prob * 100, 2)
@@ -1338,6 +1364,8 @@ def convert_wide_meter_csv_to_features(frame):
 def predict_batch_rows(frame):
     results = []
     invalid_rows = []
+    loaded_model = get_model()
+    loaded_scaler = get_scaler()
 
     if {"avg_daily_consumption", "max_daily_consumption", "consumption_variance"}.issubset(frame.columns):
         source_frame = frame.copy()
@@ -1367,8 +1395,11 @@ def predict_batch_rows(frame):
 
         city_name = normalize_city_name(str(row.get("city", "Batch Sample")).strip() or "Batch Sample")
         features = build_inference_features(avg_usage, max_usage, variance)
-        scaled_features = scaler.transform(features)
-        probability = float(model.predict_proba(scaled_features)[0][1])
+        if loaded_model is None or loaded_scaler is None:
+            probability = 1.0 if avg_usage > 3500 or max_usage > 3500 else 0.0
+        else:
+            scaled_features = loaded_scaler.transform(features)
+            probability = float(loaded_model.predict_proba(scaled_features)[0][1])
         status = "THEFT" if probability > DEFAULT_THRESHOLD else "NORMAL"
         usage_intensity = float(features.iloc[0]["usage_intensity"])
         reading_profile = build_prediction_reading_profile(avg_usage, max_usage, variance, status, city_name=city_name)
@@ -1878,7 +1909,7 @@ def build_monitoring_snapshot():
     average_drift = round(float(np.mean(drift_records)) if drift_records else 0.0, 2)
 
     return {
-        "model_loaded": model is not None and scaler is not None,
+        "model_loaded": model_artifacts_present(),
         "threshold": DEFAULT_THRESHOLD,
         "sample_window": len(recent_samples),
         "average_power": avg_power,
@@ -1945,7 +1976,7 @@ def build_model_monitoring_snapshot(limit=12):
     drift_alerts = sum(1 for item in drift_series if abs(item["drift"]) >= 30)
 
     return {
-        "model_loaded": model is not None and scaler is not None,
+        "model_loaded": model_artifacts_present(),
         "threshold": DEFAULT_THRESHOLD,
         "sample_window": len(drift_series),
         "average_drift": average_drift,
@@ -2780,12 +2811,14 @@ def predict_theft():
             "error": "Provide avg_daily_consumption, max_daily_consumption, and consumption_variance."
         }), 400
 
-    if model is None or scaler is None:
+    loaded_model = get_model()
+    loaded_scaler = get_scaler()
+    if loaded_model is None or loaded_scaler is None:
         return jsonify({"error": "Model is not loaded. Run train.py first."}), 503
 
     features = build_inference_features(avg_usage, max_usage, variance)
-    scaled_features = scaler.transform(features)
-    probability = float(model.predict_proba(scaled_features)[0][1])
+    scaled_features = loaded_scaler.transform(features)
+    probability = float(loaded_model.predict_proba(scaled_features)[0][1])
     status = "THEFT" if probability > DEFAULT_THRESHOLD else "NORMAL"
     explanations = build_prediction_explanations(avg_usage, max_usage, variance)
     reading_profile = build_prediction_reading_profile(avg_usage, max_usage, variance, status)
@@ -2810,7 +2843,9 @@ def predict_theft():
 @app.route("/api/predict-batch", methods=["POST"])
 @role_required("admin", "analyst")
 def predict_batch_theft():
-    if model is None or scaler is None:
+    loaded_model = get_model()
+    loaded_scaler = get_scaler()
+    if loaded_model is None or loaded_scaler is None:
         return jsonify({"error": "Model is not loaded. Run train.py first."}), 503
 
     upload = request.files.get("file")
