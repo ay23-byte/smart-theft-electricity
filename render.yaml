@@ -5,7 +5,7 @@ services:
     plan: starter
     region: oregon
     buildCommand: pip install -r backend/requirements.txt
-    startCommand: gunicorn --chdir backend --worker-class gthread --threads 4 --timeout 0 app:app
+    startCommand: gunicorn --chdir backend --worker-class gthread --workers 1 --threads 2 --timeout 120 app:app
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.9"
@@ -27,6 +27,8 @@ services:
         value: "false"
       - key: LIVE_CACHE_SECONDS
         value: "10"
+      - key: ENABLE_LIVE_STREAM
+        value: "false"
     disk:
       name: smarttheft-data
       mountPath: /opt/render/project/src/backend/data
