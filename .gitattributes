@@ -1,3 +1,5 @@
 backend/cleaned_data.csv filter=lfs diff=lfs merge=lfs -text
 backend/smart_theft_model.pkl filter=lfs diff=lfs merge=lfs -text
 backend/data.csv filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text
+*.pkl filter=lfs diff=lfs merge=lfs -text
