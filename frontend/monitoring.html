@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartTheft monitoring hub for model health, drift, dispatch planning, and notifications.">
+    <meta name="theme-color" content="#114a9d">
+    <title>Monitoring - SmartTheft</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/shared.js" defer></script>
+    <script src="../assets/js/monitoring.js" defer></script>
+</head>
+<body class="portal-body">
+    <div class="portal-shell">
+        <header class="portal-header">
+            <div class="portal-header__meta">
+                <a href="/" class="portal-brand" aria-label="SmartTheft home">
+                    <div class="portal-brand__mark">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="portal-brand__text">
+                        <strong>SmartTheft</strong>
+                        <small>Grid Intelligence Portal</small>
+                    </div>
+                </a>
+                <nav class="portal-meta-nav" aria-label="Secondary Navigation">
+                    <a href="/">Dashboard</a>
+                    <a href="/alerts">Alerts</a>
+                    <a href="/cases">Cases</a>
+                    <a href="/monitoring">Monitoring</a>
+                    <a href="/map">Map</a>
+                    <a href="/earth">3D Earth</a>
+                    {% if current_role == "admin" %}
+                    <a href="/admin">Admin</a>
+                    {% endif %}
+                </nav>
+                <div class="portal-user portal-user--compact">
+                    <div class="portal-user__meta">
+                        <strong>{{ current_user.full_name }}</strong>
+                        <span>{{ current_role|capitalize }}</span>
+                    </div>
+                    <a href="/logout" class="portal-pill">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="portal-main">
+            <section class="analytics-dashboard">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Model operations</span>
+                        <h2>Monitoring Hub</h2>
+                    </div>
+                    <p>Track model health, drift, alert posture, dispatch queue, and unread operational notifications.</p>
+                </div>
+                <div id="monitoringStats" class="alert-summary-grid"></div>
+            </section>
+
+            <section class="panel-surface monitoring-model-panel" aria-labelledby="model-monitoring-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Model health</span>
+                        <h2 id="model-monitoring-title">Drift timeline</h2>
+                    </div>
+                    <p>Recent power drift against the city baseline, shown as an operational health trend.</p>
+                </div>
+
+                <div class="drift-summary-grid" id="modelDriftSummary"></div>
+                <div class="drift-chart" id="modelDriftChart"></div>
+                <div class="drift-caption" id="modelDriftCaption"></div>
+                <div class="model-report-actions">
+                    <a class="btn" href="/api/model/performance-report" id="downloadModelReport">Download Model Report</a>
+                    <p>Download the latest confusion-matrix report generated during model training.</p>
+                </div>
+            </section>
+
+            <section class="monitoring-grid">
+                <article class="panel-surface">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">Hotspots</span>
+                            <h2>Top Risk Locations</h2>
+                        </div>
+                    </div>
+                    <div id="monitoringHotspots" class="stack-list"></div>
+                </article>
+
+                <article class="panel-surface">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">Dispatch</span>
+                            <h2>Route Plan</h2>
+                        </div>
+                    </div>
+                    <div id="dispatchPlanList" class="stack-list"></div>
+                </article>
+
+                <article class="panel-surface">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">Notifications</span>
+                            <h2>Unread Queue</h2>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-end;">
+                            <p>Clear the queue after you have reviewed the active notices.</p>
+                            <button id="markAllNotificationsRead" type="button" class="portal-pill portal-pill--solid">Mark All Read</button>
+                        </div>
+                    </div>
+                    <div id="monitoringNotifications" class="stack-list"></div>
+                </article>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

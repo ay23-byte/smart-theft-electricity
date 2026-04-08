@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartTheft - Advanced theft tracking and location monitoring system with live map and 3D Earth visualization.">
+    <meta name="theme-color" content="#114a9d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>SmartTheft - Theft Tracking System</title>
+
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/shared.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="../assets/js/dashboard.js" defer></script>
+</head>
+
+<body class="portal-body">
+    <div id="alarmPanel" class="alarm-panel hidden">
+        <div class="alarm-content">
+            <div class="alarm-icon">Alert</div>
+            <div class="alarm-text">
+                <h3>Theft Detected</h3>
+                <p id="alarmMessage">Electricity theft detected in a monitored location</p>
+            </div>
+            <button class="btn-dismiss" onclick="dismissAlarm()">Dismiss</button>
+        </div>
+    </div>
+
+    <div class="portal-shell">
+        <div class="portal-atmosphere" aria-hidden="true">
+            <span class="portal-atmosphere__orb portal-atmosphere__orb--one"></span>
+            <span class="portal-atmosphere__orb portal-atmosphere__orb--two"></span>
+            <span class="portal-atmosphere__grid"></span>
+        </div>
+        <header class="portal-header">
+            <div class="portal-header__meta">
+                <a href="/" class="portal-brand" aria-label="SmartTheft home">
+                    <div class="portal-brand__mark">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="portal-brand__text">
+                        <strong>SmartTheft</strong>
+                        <small>Grid Intelligence Portal</small>
+                    </div>
+                </a>
+
+                <nav class="portal-meta-nav" aria-label="Secondary Navigation">
+                    <a href="#overview">Overview</a>
+                    <a href="#analytics">Analytics</a>
+                    <a href="/cases">Cases</a>
+                    <a href="/alerts">Alerts</a>
+                    <a href="/monitoring">Monitoring</a>
+                    <a href="#actions">Actions</a>
+                    <a href="/map">Map</a>
+                    <a href="/earth">Earth</a>
+                    {% if current_role == "admin" %}
+                    <a href="/admin">Admin</a>
+                    {% endif %}
+                </nav>
+            </div>
+
+            <div class="portal-header__main">
+                <nav class="portal-nav" role="navigation" aria-label="Primary Navigation">
+                    <a href="#analytics">Data</a>
+                    <a href="#prediction">Analysis</a>
+                    <a href="#actions">Services</a>
+                    <a href="/map">Ecosystem</a>
+                </nav>
+
+                <div class="portal-actions">
+                    <a href="/map" class="portal-pill portal-pill--solid">Explore Data</a>
+                    <a href="/alerts" class="portal-pill">Alert Center</a>
+                    <a href="/cases" class="portal-pill">Cases</a>
+                    <a href="/monitoring" class="portal-pill">Monitoring</a>
+                    <a href="/earth" class="portal-pill">3D Earth</a>
+                    <a href="#prediction" class="portal-pill">Model Lab</a>
+                    {% if current_role == "admin" %}
+                    <a href="/admin" class="portal-pill">Admin</a>
+                    {% endif %}
+                    <div class="portal-user">
+                        <div class="portal-user__meta">
+                            <strong>{{ current_user.full_name }}</strong>
+                            <span>{{ current_role|capitalize }}</span>
+                        </div>
+                        <a href="/logout" class="portal-pill">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="portal-main">
+            <section class="hero-section" id="overview">
+                <div class="hero-copy">
+                    <span class="eyebrow">National electricity anomaly monitoring</span>
+                    <h1 class="hero-title">Welcome to<br>SmartTheft<br>Monitoring<br>Ecosystem</h1>
+                    <p class="hero-text">
+                        Monitor suspicious consumption, track active cities, and evaluate your trained theft detection model from a single control surface designed for rapid operator decisions.
+                    </p>
+                    <p class="hero-text hero-text--secondary">
+                        The platform combines live telemetry, geospatial awareness, and model-driven risk scoring so field teams can move from signal to investigation faster.
+                    </p>
+
+                    <div class="hero-cta-row">
+                        <a href="/map" class="portal-cta">Get started</a>
+                        <a href="/earth" class="portal-cta portal-cta--ghost">Open 3D Earth</a>
+                        <a href="#prediction" class="portal-link-action">Test the model</a>
+                    </div>
+
+                    <div class="hero-trustbar" aria-label="Platform coverage highlights">
+                        <article class="hero-trustbar__item">
+                            <strong>3 Layers</strong>
+                            <span>City, zone, and meter intelligence</span>
+                        </article>
+                        <article class="hero-trustbar__item">
+                            <strong>Live Ops</strong>
+                            <span>Alerts, cases, dispatch, and audit trail</span>
+                        </article>
+                        <article class="hero-trustbar__item">
+                            <strong>Model-Driven</strong>
+                            <span>Single and batch prediction workflows</span>
+                        </article>
+                    </div>
+                </div>
+
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="hero-globe">
+                        <span class="hero-globe__glow"></span>
+                        <span class="hero-globe__band hero-globe__band--one"></span>
+                        <span class="hero-globe__band hero-globe__band--two"></span>
+                        <span class="hero-globe__band hero-globe__band--three"></span>
+                        <span class="hero-pin hero-pin--one"></span>
+                        <span class="hero-pin hero-pin--two"></span>
+                        <span class="hero-pin hero-pin--three"></span>
+                        <span class="hero-pin hero-pin--four"></span>
+                        <span class="hero-pin hero-pin--five"></span>
+                        <span class="hero-pin hero-pin--six"></span>
+                    </div>
+
+                    <div class="hero-switcher">
+                        <button class="hero-switcher__chip hero-switcher__chip--active" type="button">Featured</button>
+                        <button class="hero-switcher__chip" type="button">Trending</button>
+                        <button class="hero-switcher__chip" type="button">Latest</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="analytics-dashboard" id="analytics" aria-labelledby="analytics-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Live dashboard</span>
+                        <h2 id="analytics-title">Operational Analytics</h2>
+                    </div>
+                    <p>Real-time summary of the monitored network and current alert posture.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card stat-card--accent">
+                        <div class="stat-label">Active Thefts</div>
+                        <div class="stat-value" id="theft-count">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Average Power</div>
+                        <div class="stat-value" id="avg-power">0W</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Peak Power</div>
+                        <div class="stat-value" id="peak-power">0W</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Top City</div>
+                        <div class="stat-value" id="top-city">--</div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="analytics-dashboard" id="portal-status" aria-labelledby="portal-status-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Operations snapshot</span>
+                        <h2 id="portal-status-title">Portal Status</h2>
+                    </div>
+                    <p>A quick health readout for the control room, notifications, and live case posture.</p>
+                </div>
+
+                <div class="stats-grid">
+                    <article class="stat-card stat-card--accent">
+                        <div class="stat-label">Unread Notices</div>
+                        <div class="stat-value" id="portal-unread-notices" data-notification-count>0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Open Cases</div>
+                        <div class="stat-value" id="portal-open-cases">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Active Alerts</div>
+                        <div class="stat-value" id="portal-active-alerts">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Model Health</div>
+                        <div class="stat-value" id="portal-model-health">Ready</div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="analytics-dashboard" id="auditTrail" aria-labelledby="audit-trail-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Audit trail</span>
+                        <h2 id="audit-trail-title">Recent Activity</h2>
+                    </div>
+                    <div class="section-heading__actions">
+                        <p>Logins, predictions, uploads, and case changes from across the portal.</p>
+                        {% if current_role == "admin" %}
+                        <button class="btn" id="exportAuditLogButton" type="button">Export CSV</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div id="audit-log-list" class="audit-log">
+                    <div class="audit-log__empty">Loading recent activity...</div>
+                </div>
+            </section>
+
+            <section class="chart-section" aria-labelledby="chart-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Consumption profile</span>
+                        <h2 id="chart-title">24-Hour Power Pattern</h2>
+                    </div>
+                    <p>Baseline demand view for spotting drift before it becomes a field incident.</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="consumptionChart"></canvas>
+                </div>
+            </section>
+
+            <section class="prediction-panel" id="prediction" aria-labelledby="prediction-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Model lab</span>
+                        <h2 id="prediction-title">Run Theft Risk Prediction</h2>
+                    </div>
+                    <p>Use the same backend model artifact to score a custom consumption profile instantly.</p>
+                </div>
+
+                <form id="predictionForm" class="prediction-form">
+                    <label class="prediction-field" for="avgConsumption">
+                        <span>Average Daily Consumption</span>
+                        <input id="avgConsumption" name="avg_daily_consumption" type="number" min="0" step="0.01" value="10" required>
+                    </label>
+
+                    <label class="prediction-field" for="maxConsumption">
+                        <span>Maximum Daily Consumption</span>
+                        <input id="maxConsumption" name="max_daily_consumption" type="number" min="0" step="0.01" value="25" required>
+                    </label>
+
+                    <label class="prediction-field" for="consumptionVariance">
+                        <span>Consumption Variance</span>
+                        <input id="consumptionVariance" name="consumption_variance" type="number" min="0" step="0.01" value="12" required>
+                    </label>
+
+                    <button class="btn prediction-submit" type="submit">Run Prediction</button>
+                </form>
+
+                <div id="predictionResult" class="prediction-result prediction-result--idle" aria-live="polite">
+                    <div class="prediction-result__top">
+                        <span class="prediction-badge" id="predictionStatusBadge">Waiting</span>
+                        <strong id="predictionRiskScore">Risk Score: --</strong>
+                    </div>
+                    <div class="prediction-meter">
+                        <div class="prediction-meter__labels">
+                            <span>Low Risk</span>
+                            <span id="predictionThresholdLabel">Threshold 35%</span>
+                            <span>High Risk</span>
+                        </div>
+                        <div class="prediction-meter__track">
+                            <div id="predictionMeterFill" class="prediction-meter__fill"></div>
+                            <div id="predictionThresholdMarker" class="prediction-meter__threshold" aria-hidden="true"></div>
+                        </div>
+                    </div>
+                    <div class="prediction-reading-profile" id="predictionReadingProfile" aria-live="polite">
+                        <div class="prediction-reading-profile__title">Reading Type</div>
+                        <strong id="predictionReadingType">Waiting for a prediction</strong>
+                        <p id="predictionReadingSummary">A plain-language explanation will appear here after you run the model.</p>
+                    </div>
+                    <p id="predictionSummary">Submit sample values to see whether the model predicts normal usage or theft.</p>
+                    <div class="prediction-features" id="predictionFeatures"></div>
+                    <div class="prediction-explainability" id="predictionExplainability"></div>
+                </div>
+            </section>
+
+            <section class="prediction-panel" id="batchPrediction" aria-labelledby="batch-prediction-title">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Batch lab</span>
+                        <h2 id="batch-prediction-title">Upload CSV For Batch Prediction</h2>
+                    </div>
+                    <p>Score multiple consumption profiles at once using the same trained backend model.</p>
+                </div>
+
+                <div class="batch-upload-layout">
+                    <form id="batchPredictionForm" class="batch-upload-form">
+                        <label class="prediction-field" for="batchPredictionFile">
+                            <span>CSV File</span>
+                            <input id="batchPredictionFile" name="file" type="file" accept=".csv,text/csv" required>
+                        </label>
+
+                        <button class="btn prediction-submit" type="submit">Run Batch Prediction</button>
+                    </form>
+
+                    <div class="batch-upload-guide">
+                        <strong>CSV format</strong>
+                        <p>Use either engineered feature rows or a raw smart-meter sheet like <code>data.csv</code>.</p>
+                        <p>Engineered columns: <code>avg_daily_consumption</code>, <code>max_daily_consumption</code>, <code>consumption_variance</code></p>
+                        <p>Raw wide format: <code>CONS_NO</code>, <code>FLAG</code>, and many daily reading columns</p>
+                        <pre class="batch-upload-guide__sample">city,avg_daily_consumption,max_daily_consumption,consumption_variance
+Mumbai,10,25,12
+Delhi,16,39,18</pre>
+                        <button class="btn" id="downloadBatchResultsButton" type="button" disabled>Download Batch Results CSV</button>
+                        <p style="margin-top: 10px;">Download the scored rows with reading types, risk scores, and feature values after a batch run.</p>
+                        {% if current_role == "admin" %}
+                        <button class="btn" id="retrainModelButton" type="button">Retrain Model</button>
+                        <p style="margin-top: 10px;">Rebuild the model from the current training datasets and refresh the saved artifacts.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div id="batchPredictionResult" class="prediction-result prediction-result--idle" aria-live="polite">
+                    <div class="prediction-result__top">
+                        <span class="prediction-badge" id="batchPredictionBadge">Waiting</span>
+                        <strong id="batchPredictionHeadline">Upload a CSV to begin batch scoring.</strong>
+                    </div>
+                    <p id="batchPredictionSummary">The system will summarize theft count, normal count, and highest-risk sample once the upload finishes.</p>
+                    <div id="batchPredictionMetrics" class="prediction-features"></div>
+                    <div id="batchPredictionInvalidRows" class="batch-invalid-list"></div>
+                    <div class="batch-table-wrap">
+                        <table class="batch-results-table">
+                            <thead>
+                                <tr>
+                                    <th>Row</th>
+                                    <th>City</th>
+                                    <th>Status</th>
+                                    <th>Reading Type</th>
+                                    <th>Explanation</th>
+                                    <th>Risk</th>
+                                    <th>Avg</th>
+                                    <th>Max</th>
+                                    <th>Variance</th>
+                                    <th>Intensity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batchPredictionTableBody">
+                                <tr>
+                                    <td colspan="10">No batch prediction results yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section class="action-panel" id="actions">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Field operations</span>
+                        <h2>Add City To Monitoring</h2>
+                    </div>
+                    <p>Extend live tracking coverage for a new city and push it into map and earth views.</p>
+                </div>
+
+                <div class="input-box" aria-labelledby="city-input-label">
+                    <label id="city-input-label" for="city" style="display: none;">Enter city name</label>
+                    <input id="city" type="text" placeholder="Enter city name" autocomplete="off" aria-label="City name input">
+                    <button class="btn" onclick="sendCity()" aria-label="Add city to tracking">Add City</button>
+                </div>
+
+                <div class="quick-links">
+                    <a href="/map" class="quick-link-card">
+                        <span class="quick-link-card__eyebrow">2D tracking</span>
+                        <strong>Open Live Map</strong>
+                        <p>Inspect city markers, alerts, and filterable locations in the standard monitoring view.</p>
+                    </a>
+                    <a href="/earth" class="quick-link-card quick-link-card--accent">
+                        <span class="quick-link-card__eyebrow">3D tracking</span>
+                        <strong>Open 3D Earth</strong>
+                        <p>Launch the globe view to inspect hotspots and monitored cities in the 3D Earth interface.</p>
+                    </a>
+                    <a href="/monitoring" class="quick-link-card">
+                        <span class="quick-link-card__eyebrow">Operations</span>
+                        <strong>Open Monitoring Hub</strong>
+                        <p>Review drift, dispatch queue, notifications, and model health from one operational surface.</p>
+                    </a>
+                    {% if current_role == "admin" %}
+                    <a href="/admin" class="quick-link-card">
+                        <span class="quick-link-card__eyebrow">Admin</span>
+                        <strong>Open Admin Console</strong>
+                        <p>Manage portal users, ingest CSV readings, and review notification activity.</p>
+                    </a>
+                    {% endif %}
+                </div>
+
+                <section id="status" role="region" aria-live="polite" aria-label="Status messages"></section>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

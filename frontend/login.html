@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure login for SmartTheft Grid Intelligence Portal.">
+    <meta name="theme-color" content="#114a9d">
+    <title>Login - SmartTheft</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body class="portal-body portal-body--login">
+    <div class="auth-shell">
+        <section class="auth-panel">
+            <div class="auth-panel__brand">
+                <div class="portal-brand__mark">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div class="portal-brand__text">
+                    <strong>SmartTheft</strong>
+                    <small>Grid Intelligence Portal</small>
+                </div>
+            </div>
+
+            <div class="auth-panel__copy">
+                <span class="eyebrow">Secure access</span>
+                <h1>Sign in to the operations portal</h1>
+                <p>Use a role-based account to access monitoring, case management, and theft analytics workflows.</p>
+            </div>
+
+            <form class="auth-form" method="post">
+                <label class="case-field" for="username">
+                    <span>Username</span>
+                    <input id="username" name="username" type="text" autocomplete="username" required>
+                </label>
+
+                <label class="case-field" for="password">
+                    <span>Password</span>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </label>
+
+                {% if error %}
+                <div class="auth-feedback auth-feedback--error">{{ error }}</div>
+                {% endif %}
+
+                <button type="submit" class="btn">Login</button>
+            </form>
+
+            <div class="auth-demo">
+                <strong>Default demo accounts</strong>
+                <div class="auth-demo__grid">
+                    {% for user in demo_users %}
+                    <div class="auth-demo__card">
+                        <span class="alert-card__severity">{{ user.role }}</span>
+                        <div><strong>{{ user.username }}</strong></div>
+                        <div>Password: {{ user.password }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

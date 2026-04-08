@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartTheft case management center for assigning, tracking, and resolving theft investigations.">
+    <meta name="theme-color" content="#114a9d">
+    <title>Cases - SmartTheft</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script>
+        window.smartTheftCurrentRole = "{{ current_role }}";
+    </script>
+    <script src="../assets/js/shared.js" defer></script>
+    <script src="../assets/js/cases.js" defer></script>
+</head>
+<body class="portal-body">
+    <div class="portal-shell">
+        <header class="portal-header">
+            <div class="portal-header__meta">
+                <a href="/" class="portal-brand" aria-label="SmartTheft home">
+                    <div class="portal-brand__mark">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="portal-brand__text">
+                        <strong>SmartTheft</strong>
+                        <small>Grid Intelligence Portal</small>
+                    </div>
+                </a>
+                <nav class="portal-meta-nav" aria-label="Secondary Navigation">
+                    <a href="/">Dashboard</a>
+                    <a href="/alerts">Alerts</a>
+                    <a href="/cases">Cases</a>
+                    <a href="/monitoring">Monitoring</a>
+                    <a href="/map">Map</a>
+                    <a href="/earth">3D Earth</a>
+                    {% if current_role == "admin" %}
+                    <a href="/admin">Admin</a>
+                    {% endif %}
+                </nav>
+                <div class="portal-user portal-user--compact">
+                    <div class="portal-user__meta">
+                        <strong>{{ current_user.full_name }}</strong>
+                        <span>{{ current_role|capitalize }}</span>
+                    </div>
+                    <a href="/logout" class="portal-pill">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="portal-main">
+            <section class="analytics-dashboard">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Investigation workflow</span>
+                        <h2>Case Management</h2>
+                    </div>
+                    <p>Track which hotspots have been assigned, inspected, and resolved by your operations team.</p>
+                </div>
+
+                <div class="alert-summary-grid">
+                    <article class="stat-card stat-card--accent">
+                        <div class="stat-label">Total Cases</div>
+                        <div class="stat-value" id="case-total-count">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Open Cases</div>
+                        <div class="stat-value" id="case-open-count">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">In Progress</div>
+                        <div class="stat-value" id="case-progress-count">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Resolved</div>
+                        <div class="stat-value" id="case-resolved-count">0</div>
+                    </article>
+                    <article class="stat-card">
+                        <div class="stat-label">Closed</div>
+                        <div class="stat-value" id="case-closed-count">0</div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="prediction-panel">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Control desk</span>
+                        <h2>Investigation Queue</h2>
+                    </div>
+                    <p>Update assignees, notes, and current progress for each theft investigation.</p>
+                </div>
+
+                <div class="cases-toolbar">
+                    <label class="cases-filter" for="caseStatusFilter">
+                        <span>Filter by status</span>
+                        <select id="caseStatusFilter">
+                            <option value="">All cases</option>
+                            <option value="open">Open</option>
+                            <option value="in_progress">In progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </label>
+                    <label class="cases-filter" for="caseSeverityFilter">
+                        <span>Severity</span>
+                        <select id="caseSeverityFilter">
+                            <option value="">All severity</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="watch">Watch</option>
+                        </select>
+                    </label>
+                    <label class="cases-filter" for="caseSearchInput">
+                        <span>Search case</span>
+                        <input id="caseSearchInput" type="text" placeholder="Search city, zone, assignee">
+                    </label>
+                    <div class="cases-toolbar__actions">
+                        <p class="cases-toolbar__hint">Open new cases from Alert Center, then manage follow-up here.</p>
+                        {% if current_role in ["admin", "operator"] %}
+                        <button id="bulkCloseVisibleCases" type="button" class="portal-pill portal-pill--solid">Close Visible</button>
+                        <button id="bulkReopenVisibleCases" type="button" class="portal-pill">Reopen Visible</button>
+                        {% endif %}
+                        <a id="caseExportLink" href="/api/cases/export.csv" class="portal-pill">Export CSV</a>
+                        <a id="caseReportLink" href="/api/cases/report.pdf" class="portal-pill">Export PDF</a>
+                    </div>
+                </div>
+
+                <div id="caseFeedback" class="cases-feedback" aria-live="polite"></div>
+                <div id="casesList" class="cases-list"></div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

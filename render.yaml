@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: smarttheft-web
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn --chdir backend --worker-class gthread --threads 4 --timeout 0 app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/backend/data/theft.db
+      - key: CESIUM_ION_TOKEN
+        sync: false
+      - key: TWILIO_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_FROM
+        sync: false
+      - key: TWILIO_PHONE_TO
+        sync: false
+      - key: SMS_ALERTS_ENABLED
+        value: "false"
+      - key: LIVE_CACHE_SECONDS
+        value: "10"
+    disk:
+      name: smarttheft-data
+      mountPath: /opt/render/project/src/backend/data
+      sizeGB: 1

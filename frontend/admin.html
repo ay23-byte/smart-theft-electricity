@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SmartTheft admin console for portal users, data ingestion, and notifications.">
+    <meta name="theme-color" content="#114a9d">
+    <title>Admin - SmartTheft</title>
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/shared.js" defer></script>
+    <script src="../assets/js/admin.js" defer></script>
+</head>
+<body class="portal-body">
+    <div class="portal-shell">
+        <header class="portal-header">
+            <div class="portal-header__meta">
+                <a href="/" class="portal-brand" aria-label="SmartTheft home">
+                    <div class="portal-brand__mark">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="portal-brand__text">
+                        <strong>SmartTheft</strong>
+                        <small>Grid Intelligence Portal</small>
+                    </div>
+                </a>
+                <nav class="portal-meta-nav" aria-label="Secondary Navigation">
+                    <a href="/">Dashboard</a>
+                    <a href="/alerts">Alerts</a>
+                    <a href="/cases">Cases</a>
+                    <a href="/monitoring">Monitoring</a>
+                    <a href="/map">Map</a>
+                    <a href="/earth">3D Earth</a>
+                    <a href="/admin">Admin</a>
+                </nav>
+                <div class="portal-user portal-user--compact">
+                    <div class="portal-user__meta">
+                        <strong>{{ current_user.full_name }}</strong>
+                        <span>{{ current_role|capitalize }}</span>
+                    </div>
+                    <a href="/logout" class="portal-pill">Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="portal-main">
+            <section class="analytics-dashboard">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">System control</span>
+                        <h2>Admin Console</h2>
+                    </div>
+                    <p>Manage portal users, import external reading files, and review notifications across the investigation workflow.</p>
+                </div>
+            </section>
+
+            <section class="monitoring-grid">
+                <article class="panel-surface">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">Portal users</span>
+                            <h2>Create User</h2>
+                        </div>
+                    </div>
+                    <form id="adminUserForm" class="case-form">
+                        <label class="case-field">
+                            <span>Full Name</span>
+                            <input name="full_name" type="text" required>
+                        </label>
+                        <label class="case-field">
+                            <span>Username</span>
+                            <input name="username" type="text" required>
+                        </label>
+                        <label class="case-field">
+                            <span>Password</span>
+                            <input name="password" type="text" required>
+                        </label>
+                        <label class="case-field">
+                            <span>Role</span>
+                            <select name="role" required>
+                                <option value="operator">Operator</option>
+                                <option value="analyst">Analyst</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </label>
+                        <div class="case-field case-field--full">
+                            <button class="btn" type="submit">Create User</button>
+                        </div>
+                    </form>
+                    <div id="adminFeedback" class="cases-feedback" aria-live="polite"></div>
+                    <div id="adminUsersList" class="stack-list"></div>
+                </article>
+
+                <article class="panel-surface">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">CSV ingestion</span>
+                            <h2>Import Readings</h2>
+                        </div>
+                    </div>
+                    <form id="ingestionForm" class="batch-upload-form">
+                        <label class="prediction-field">
+                            <span>Upload CSV with at least <code>city</code> and <code>power</code></span>
+                            <input id="ingestionFile" name="file" type="file" accept=".csv,text/csv" required>
+                        </label>
+                        <button class="btn" type="submit">Ingest CSV</button>
+                    </form>
+                    <div id="ingestionResult" class="stack-list"></div>
+                </article>
+
+                <article class="panel-surface">
+                    <div class="section-heading">
+                        <div>
+                            <span class="eyebrow">Notification center</span>
+                            <h2>Recent Notifications</h2>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-end;">
+                            <p>Review the newest system notices and clear them when they're handled.</p>
+                            <button id="markAllNotificationsRead" type="button" class="portal-pill portal-pill--solid">Mark All Read</button>
+                        </div>
+                    </div>
+                    <div id="adminNotifications" class="stack-list"></div>
+                </article>
+            </section>
+
+            <section class="panel-surface admin-database-panel">
+                <div class="section-heading">
+                    <div>
+                        <span class="eyebrow">Database safety</span>
+                        <h2>Backup & Restore</h2>
+                    </div>
+                    <p>Download a live SQLite backup or restore the database from a saved snapshot.</p>
+                </div>
+
+                <div class="admin-database-grid">
+                    <div class="stack-item">
+                        <strong>Download Backup</strong>
+                        <span>Exports the current SQLite database file for offline storage or migration.</span>
+                        <button class="btn" id="downloadDatabaseBackup" type="button">Download SQLite Backup</button>
+                    </div>
+
+                    <form id="databaseRestoreForm" class="stack-item admin-database-form">
+                        <strong>Restore Snapshot</strong>
+                        <span>Upload a `.sqlite`, `.db`, or `.sqlite3` file to restore the database.</span>
+                        <label class="prediction-field">
+                            <span>Backup File</span>
+                            <input id="databaseRestoreFile" name="file" type="file" accept=".sqlite,.db,.sqlite3" required>
+                        </label>
+                        <button class="btn" type="submit">Restore Database</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

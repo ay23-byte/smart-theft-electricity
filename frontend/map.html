@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Live theft tracking map with real-time location updates.">
+    <meta name="theme-color" content="#0A0E27">
+
+    <title>Live Theft Map - SmartTheft</title>
+
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/shared.js" defer></script>
+    <style>
+        #diagnostics {
+            background: #1a1a2e;
+            border: 2px solid #16c784;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+        }
+        .test-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .test-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .test-status.loading {
+            background: #fbbf24;
+            animation: pulse 1s infinite;
+        }
+        .test-status.pass {
+            background: #16c784;
+        }
+        .test-status.fail {
+            background: #ef4444;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .fallback-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .location-item {
+            background: #1a1a2e;
+            padding: 12px;
+            margin: 8px 0;
+            border-left: 4px solid;
+            border-radius: 4px;
+        }
+        .location-item.theft {
+            border-color: #ef4444;
+        }
+        .location-item.normal {
+            border-color: #16c784;
+        }
+    </style>
+    
+    <!-- Try jsDelivr CDN as primary, then fallback to unpkg -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <!-- 🚨 ALARM NOTIFICATION PANEL -->
+    <div id="alarmPanel" class="alarm-panel hidden">
+        <div class="alarm-content">
+            <div class="alarm-icon">🚨</div>
+            <div class="alarm-text">
+                <h3>THEFT DETECTED!</h3>
+                <p id="alarmMessage">Electricity theft detected in a monitored location</p>
+            </div>
+            <button class="btn-dismiss" onclick="dismissAlarm()">✕ Dismiss</button>
+        </div>
+    </div>
+
+    <header>
+        <h1 class="nasa-title">📍 Live Theft Tracker</h1>
+        <p role="status">Real-time location mapping and theft alerts</p>
+    </header>
+
+    <main>
+        <!-- 🔍 SEARCH & FILTER SECTION -->
+        <section class="search-filter-section" aria-labelledby="search-title">
+            <h2 id="search-title">🔍 Search & Filter Cities</h2>
+            <div class="filter-controls">
+                <input 
+                    type="text" 
+                    id="citySearch" 
+                    placeholder="Search by city name..." 
+                    aria-label="Search cities"
+                >
+                <button class="btn" id="searchButton" aria-label="Search city">Search</button>
+                <select id="statusFilter" aria-label="Filter by theft status">
+                    <option value="">All Status</option>
+                    <option value="THEFT">🚨 Theft Only</option>
+                    <option value="NORMAL">✅ Normal Only</option>
+                </select>
+                <button class="btn" onclick="resetFilters()" aria-label="Reset all filters">Reset Filters</button>
+            </div>
+        </section>
+
+        <!-- Diagnostic Panel (shown if CDN fails) -->
+        <div id="diagnostics">
+            <h2>🔧 Diagnostics</h2>
+            <div id="tests">
+                <div class="test-item">
+                    <div class="test-status loading"></div>
+                    <span>Testing CDN connectivity...</span>
+                </div>
+            </div>
+            <h3>Fallback View</h3>
+            <div class="fallback-list" id="fallback-list"></div>
+            <p style="margin-top: 15px; font-size: 12px; color: #888;">
+                ℹ️ If this message persists, try: (1) Hard refresh (Ctrl+Shift+R), (2) Check firewall settings, (3) Try a VPN
+            </p>
+        </div>
+
+        <!-- Map Container (shown if CDN works) -->
+        <div id="map" role="region" aria-label="Live theft tracking map" style="display: none;"></div>
+
+        <aside id="locationDrawerMap" class="location-drawer" aria-live="polite" aria-label="Location theft details">
+            <div class="location-drawer__header">
+                <div>
+                    <span class="location-drawer__eyebrow">2D Live Map</span>
+                    <h2 id="drawerCityMap">Select a place</h2>
+                </div>
+                <button class="location-drawer__close" onclick="closeLocationDrawerMap()" aria-label="Close details panel">Close</button>
+            </div>
+            <div class="location-drawer__status">
+                <span id="drawerStatusMap" class="location-drawer__badge">Waiting</span>
+                <strong id="drawerRiskMap">Risk Score: --</strong>
+            </div>
+            <p id="drawerSummaryMap" class="location-drawer__summary">Click a city marker to inspect theft detection details.</p>
+            <div id="drawerGridMap" class="location-drawer__grid"></div>
+            <section class="location-history">
+                <div class="location-history__header">
+                    <h3>Recent History</h3>
+                    <small id="drawerHistoryMetaMap">No city selected</small>
+                </div>
+                <div id="drawerHistoryBarsMap" class="location-history__bars"></div>
+            </section>
+            <section class="location-consumers">
+                <div class="location-history__header">
+                    <h3>Suspicious Consumers</h3>
+                    <small id="drawerConsumersMetaMap">No zone selected</small>
+                </div>
+                <div id="drawerConsumersListMap" class="location-consumers__list"></div>
+            </section>
+        </aside>
+    </main>
+
+    <script src="../assets/js/map.js"></script>
+</body>
+</html>

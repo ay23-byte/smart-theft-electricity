@@ -1,0 +1,443 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="3D Earth visualization showing global theft hotspots and real-time tracking data.">
+    <meta name="theme-color" content="#0A0E27">
+    <title>3D Earth View - SmartTheft</title>
+
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/shared.js" defer></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            background: #0a0e27;
+        }
+
+        header {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(10, 14, 39, 0.95);
+            padding: 12px 16px;
+            border-radius: 16px;
+            border: 1px solid rgba(22, 199, 132, 0.8);
+            z-index: 100;
+            max-width: 280px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(12px);
+        }
+
+        header h1 {
+            margin: 0 0 4px 0;
+            font-size: 20px;
+            line-height: 1.05;
+        }
+
+        header p {
+            margin: 0;
+            font-size: 11px;
+            color: #aaa;
+        }
+
+        #earth {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #diagnostics {
+            background: #1a1a2e;
+            border: 2px solid #16c784;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px;
+            display: none;
+            max-height: 80vh;
+            overflow-y: auto;
+            max-width: 1200px;
+        }
+
+        .test-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .test-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .test-status.loading {
+            background: #fbbf24;
+            animation: pulse 1s infinite;
+        }
+
+        .test-status.pass {
+            background: #16c784;
+        }
+
+        .test-status.fail {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fallback-list {
+            max-height: 600px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .location-card {
+            background: #1a1a2e;
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 15px;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .location-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .location-card.theft {
+            border-color: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+
+        .location-card.normal {
+            border-color: #16c784;
+            box-shadow: 0 0 10px rgba(22, 199, 132, 0.3);
+        }
+
+        .location-card strong {
+            font-size: 18px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .location-card small {
+            display: block;
+            margin: 4px 0;
+            color: #aaa;
+        }
+
+        .imagery-status {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 110;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(10, 14, 39, 0.92);
+            color: #d7e3ff;
+            font: 600 13px/1.2 Arial, sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .imagery-status--active {
+            color: #8ff7bf;
+            border-color: rgba(22, 199, 132, 0.45);
+        }
+
+        .imagery-status--fallback {
+            color: #ffd166;
+            border-color: rgba(255, 209, 102, 0.45);
+        }
+
+        .earth-controls-toggle {
+            position: absolute;
+            top: 92px;
+            left: 16px;
+            z-index: 101;
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(22, 199, 132, 0.65);
+            background: rgba(10, 14, 39, 0.88);
+            color: #e8f0ff;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(12px);
+        }
+
+        .earth-controls-panel {
+            position: absolute;
+            top: 144px;
+            left: 16px;
+            z-index: 100;
+            width: min(320px, calc(100vw - 32px));
+            padding: 14px;
+            border-radius: 18px;
+            background: rgba(9, 14, 34, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.26);
+            backdrop-filter: blur(16px);
+            transform: translateY(-8px) scale(0.98);
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+        }
+
+        .earth-controls-panel.is-open {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .earth-controls-panel__header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .earth-controls-panel__eyebrow {
+            display: block;
+            margin-bottom: 4px;
+            color: #91f5ff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .earth-controls-panel__header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        .earth-controls-panel__close {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: #dfe8ff;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .search-filter-section {
+            padding: 0;
+            max-width: none;
+            margin: 0;
+            background: transparent;
+            border-radius: 0;
+            border: 0;
+            box-shadow: none;
+            position: static;
+            z-index: auto;
+        }
+
+        .earth-toolbar__toggle {
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(22, 199, 132, 0.45);
+            background: rgba(10, 14, 39, 0.9);
+            color: #d7e3ff;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(12px);
+        }
+
+        .search-filter-section h2 {
+            margin-bottom: 12px;
+            color: #fff;
+            font-size: 18px;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        .filter-controls input,
+        .filter-controls select {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 14px;
+            min-height: 44px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            color: #fff;
+            font-size: 1rem;
+            border-radius: 14px;
+            box-sizing: border-box;
+        }
+
+        .filter-controls input:focus,
+        .filter-controls select:focus {
+            border-color: #00d4ff;
+            outline: none;
+        }
+
+        .filter-controls select option {
+            background: #0a0e27;
+            color: #fff;
+        }
+
+        @media (max-width: 900px) {
+            header,
+            .earth-controls-panel {
+                max-width: calc(100vw - 40px);
+            }
+
+            .earth-controls-toggle {
+                top: 90px;
+            }
+
+            .earth-controls-panel {
+                top: 140px;
+            }
+
+            .fallback-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.113/Build/Cesium/Widgets/widgets.css"/>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.113/Build/Cesium/Cesium.js"></script>
+</head>
+
+<body>
+    <div id="alarmPanel" class="alarm-panel hidden">
+        <div class="alarm-content">
+            <div class="alarm-icon">Alert</div>
+            <div class="alarm-text">
+                <h3>THEFT DETECTED!</h3>
+                <p id="alarmMessage">Electricity theft detected in a monitored location</p>
+            </div>
+            <button class="btn-dismiss" onclick="dismissAlarm()">Dismiss</button>
+        </div>
+    </div>
+
+    <header>
+        <h1 class="nasa-title">3D Earth - Theft Hotspots</h1>
+        <p role="status">Global theft analysis and spatial visualization</p>
+    </header>
+
+    <button id="earthPanelToggle" class="earth-controls-toggle" type="button" aria-expanded="false" aria-controls="earthControlsPanel">
+        Explore Hotspots
+    </button>
+
+    <div id="imageryStatus" class="imagery-status imagery-status--fallback">Loading Google Earth-style imagery...</div>
+
+    <div id="earthControlsPanel" class="earth-controls-panel" aria-hidden="true">
+        <div class="earth-controls-panel__header">
+            <div>
+                <span class="earth-controls-panel__eyebrow">Quick Filters</span>
+                <h2 id="search-title-earth">Filter Cities</h2>
+            </div>
+            <button id="earthPanelClose" class="earth-controls-panel__close" type="button">Close</button>
+        </div>
+
+        <section class="search-filter-section" aria-labelledby="search-title-earth">
+            <div class="filter-controls" style="flex-direction: column;">
+                <input
+                    type="text"
+                    id="citySearchEarth"
+                    placeholder="Search by city name..."
+                    aria-label="Search cities on Earth"
+                    style="width: 100%; margin-bottom: 8px;"
+                >
+                <button class="btn" id="searchButtonEarth" style="width:100%; margin-bottom:8px;">Search</button>
+                <select id="statusFilterEarth" aria-label="Filter by theft status" style="width: 100%; margin-bottom: 8px;">
+                    <option value="">All Status</option>
+                    <option value="THEFT">Theft Only</option>
+                    <option value="NORMAL">Normal Only</option>
+                </select>
+                <button class="btn" onclick="resetFiltersEarth()" aria-label="Reset all filters" style="width: 100%;">Reset Filters</button>
+            </div>
+        </section>
+    </div>
+
+    <div id="earth" role="region" aria-label="3D Earth visualization showing theft hotspots"></div>
+
+    <aside id="locationDrawerEarth" class="location-drawer location-drawer--floating" aria-live="polite" aria-label="3D Earth location theft details">
+        <div class="location-drawer__header">
+            <div>
+                <span class="location-drawer__eyebrow">3D Earth</span>
+                <h2 id="drawerCityEarth">Select a place</h2>
+            </div>
+            <button class="location-drawer__close" onclick="closeLocationDrawerEarth()" aria-label="Close details panel">Close</button>
+        </div>
+        <div class="location-drawer__status">
+            <span id="drawerStatusEarth" class="location-drawer__badge">Waiting</span>
+            <strong id="drawerRiskEarth">Risk Score: --</strong>
+        </div>
+        <p id="drawerSummaryEarth" class="location-drawer__summary">Click a hotspot on the globe to inspect theft detection details.</p>
+        <div id="drawerGridEarth" class="location-drawer__grid"></div>
+        <section class="location-history">
+            <div class="location-history__header">
+                <h3>Recent History</h3>
+                <small id="drawerHistoryMetaEarth">No city selected</small>
+            </div>
+            <div id="drawerHistoryBarsEarth" class="location-history__bars"></div>
+        </section>
+        <section class="location-consumers">
+            <div class="location-history__header">
+                <h3>Suspicious Consumers</h3>
+                <small id="drawerConsumersMetaEarth">No zone selected</small>
+            </div>
+            <div id="drawerConsumersListEarth" class="location-consumers__list"></div>
+        </section>
+    </aside>
+
+    <button id="fallbackToggle" class="earth-toolbar__toggle" type="button" style="display:none; position: fixed; left: 20px; bottom: 20px; z-index: 113;">
+        Show Hotspot List
+    </button>
+
+    <div id="diagnostics" aria-live="polite">
+        <div class="diagnostics__header">
+            <div>
+                <h2>Hotspot List</h2>
+                <span class="earth-panel__hint">Tap a card to open the location details.</span>
+            </div>
+            <button class="earth-panel__close" id="diagnosticsClose" type="button">Close</button>
+        </div>
+        <div class="diagnostics__body">
+            <div id="tests">
+                <div class="test-item">
+                    <div class="test-status loading"></div>
+                    <span>Preparing hotspot list...</span>
+                </div>
+            </div>
+            <div class="fallback-list" id="fallback-list"></div>
+            <p style="margin-top: 15px; font-size: 12px; color: #888;">
+                Cesium is unavailable right now, so this compact list is shown instead.
+            </p>
+        </div>
+    </div>
+
+    <script src="../assets/js/earth.js"></script>
+</body>
+</html>
