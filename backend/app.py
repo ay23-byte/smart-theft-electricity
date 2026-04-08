@@ -109,6 +109,7 @@ TWILIO_TO = os.getenv('TWILIO_PHONE_TO', '+91XXXXXXXXXX')
 SMS_ALERTS_ENABLED = os.getenv('SMS_ALERTS_ENABLED', 'false').strip().lower() == 'true'
 CESIUM_ION_TOKEN = os.getenv('CESIUM_ION_TOKEN', '')
 LIVE_CACHE_SECONDS = max(1, int(os.getenv('LIVE_CACHE_SECONDS', '10')))
+ENABLE_LIVE_STREAM = os.getenv('ENABLE_LIVE_STREAM', 'false').strip().lower() == 'true'
 
 client = Client(TWILIO_SID, TWILIO_AUTH)
 # Data folder is inside the backend folder according to your setup
@@ -1090,7 +1091,7 @@ def session_details():
 @app.route("/")
 @login_required
 def home():
-    return render_template("index.html")
+    return render_template("index.html", live_stream_enabled=ENABLE_LIVE_STREAM)
 
 @app.route("/map")
 @login_required
