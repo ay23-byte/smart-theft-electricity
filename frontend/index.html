@@ -11,6 +11,11 @@
     <title>SmartTheft - Theft Tracking System</title>
 
     <link rel="stylesheet" href="../assets/css/style.css">
+    <script>
+        window.SMARTTHEFT_RUNTIME = {
+            liveStreamEnabled: {{ live_stream_enabled|default(false)|tojson }}
+        };
+    </script>
     <script src="../assets/js/shared.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
     <script src="../assets/js/dashboard.js" defer></script>
